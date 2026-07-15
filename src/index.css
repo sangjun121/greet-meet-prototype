@@ -117,6 +117,18 @@
   background: #19734d;
 }
 
+.time-grid-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-inline: contain;
+  touch-action: auto;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 @media (max-width: 820px) {
   .home-hero {
     grid-template-columns: 1fr;
@@ -132,13 +144,44 @@
 @media (max-width: 560px) {
   .home-hero {
     padding: 42px 16px 36px !important;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .home-hero h2 {
     font-size: clamp(38px, 12vw, 58px) !important;
+    max-width: 100%;
   }
 
   .home-hero .hero-description {
     font-size: 15px !important;
+  }
+
+  .hero-preview {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 18px 14px 16px;
+  }
+
+  .preview-caption,
+  .preview-footer {
+    font-size: 11px;
+  }
+
+  .preview-caption strong {
+    font-size: 14px;
+  }
+
+  .calendar-picker-grid {
+    grid-template-columns: 36px repeat(7, minmax(0, 1fr)) 36px;
+    gap: 2px;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .modal-actions > button {
+    width: 100%;
   }
 }

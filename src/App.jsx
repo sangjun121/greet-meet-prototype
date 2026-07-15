@@ -287,7 +287,7 @@ const AppModal = ({ open, icon: Icon = Info, title, children, actions, onClose, 
           </div>
         )}
         <div className="px-5 py-6">{children}</div>
-        {actions && <div className="flex justify-end gap-2 bg-[#f5f5f7] px-5 py-4">{actions}</div>}
+        {actions && <div className="modal-actions bg-[#f5f5f7] px-5 py-4">{actions}</div>}
       </div>
     </div>
   );
@@ -1165,8 +1165,8 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
       </header>
 
       <div className="bg-[#f5f5f7]/85 backdrop-blur-xl border-b border-[#e0e0e0] sticky top-16 z-40">
-        <div className="max-w-6xl mx-auto h-14 px-4 flex items-center justify-between">
-          <div className="min-w-0">
+        <div className="max-w-6xl mx-auto h-14 px-4 flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-[#1d1d1f] truncate">
               {appState === 'board' && boardParams ? boardParams.title : 'when7meet'}
             </p>
@@ -1182,7 +1182,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                 window.location.href,
                 boardParams?.type === MEETING_TYPES.REGULAR ? '모임 링크가 복사되었습니다.' : '초대 링크가 복사되었습니다.'
               )}
-              className="text-xs sm:text-sm bg-[#19734d] hover:bg-[#2b9668] text-white px-4 py-2 rounded-full flex items-center gap-1.5 font-semibold transition-colors"
+              className="shrink-0 text-xs sm:text-sm bg-[#19734d] hover:bg-[#2b9668] text-white px-3 sm:px-4 py-2 rounded-full flex items-center gap-1.5 font-semibold transition-colors"
             >
               <LinkIcon size={14}/> {boardParams?.type === MEETING_TYPES.REGULAR ? '링크 공유' : '초대'}
             </button>
@@ -1275,7 +1275,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-semibold text-[#333333] mb-2">어떤 약속인가요?</label>
-                  <div className="grid grid-cols-2 gap-2 rounded-[18px] bg-[#f5f5f7] p-2 border border-[#e0e0e0]">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-[18px] bg-[#f5f5f7] p-2 border border-[#e0e0e0]">
                     {[
                       { type: MEETING_TYPES.WORK, title: '업무 일정', description: '특정 날짜와 시간을 정해요' },
                       { type: MEETING_TYPES.REGULAR, title: '정기 모임', description: '반복할 요일과 시간을 정해요' },
@@ -1396,7 +1396,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-[52px_repeat(7,minmax(0,1fr))_52px] gap-1 items-center text-center">
+                    <div className="calendar-picker-grid grid grid-cols-[52px_repeat(7,minmax(0,1fr))_52px] gap-1 items-center text-center">
                       <div />
                       {['일', '월', '화', '수', '목', '금', '토'].map((dayLabel, index) => (
 	                        <div key={`${dayLabel}-${index}`} className="text-sm font-semibold text-[#333333] py-1">
@@ -1615,15 +1615,15 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
             )}
 
             {/* 타이틀 영역 & 로그인 폼 */}
-            <div className="max-w-6xl mx-auto px-4 py-8">
-            <section className="bg-white text-[#1d1d1f] p-6 sm:p-10 rounded-[18px] border border-[#e0e0e0] mb-6">
-              <div className="flex flex-col lg:flex-row lg:items-end gap-6 justify-between">
+            <div className="max-w-6xl mx-auto px-4 py-5 sm:py-8">
+            <section className="bg-white text-[#1d1d1f] p-5 sm:p-10 rounded-[18px] border border-[#e0e0e0] mb-6">
+              <div className="flex flex-col lg:flex-row lg:items-end gap-5 sm:gap-6 justify-between">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 text-sm font-semibold text-[#19734d] mb-3">
                     <Calendar size={16} />
                     {isWorkMeeting ? '약속 보드' : '모임 보드'}
                   </div>
-                  <h2 className="text-3xl sm:text-5xl font-semibold leading-[0.95] text-[#1d1d1f] truncate">{boardParams.title}</h2>
+                  <h2 className="text-3xl sm:text-5xl font-semibold leading-tight break-words text-[#1d1d1f]">{boardParams.title}</h2>
                   <div className="flex flex-wrap gap-2 mt-5">
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f5f5f7] px-3 py-1.5 text-xs font-semibold text-[#333333]">
                       <Calendar size={13} /> {boardParams.dates.length}{isRegularMeeting ? '개 요일' : '일'}
@@ -1643,7 +1643,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                 </div>
 
                 <form onSubmit={handleJoinBoard} className="w-full lg:w-auto">
-                  <div className="rounded-full bg-[#f5f5f7] p-2 flex flex-wrap sm:flex-nowrap gap-2 border border-[#e0e0e0]">
+                  <div className="rounded-[18px] bg-[#f5f5f7] p-2 flex flex-col sm:flex-row gap-2 border border-[#e0e0e0]">
                     <input
                       type="text"
                       value={currentUser}
@@ -1654,7 +1654,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                       disabled={isJoined || isJoining}
                       placeholder="이름 입력"
                       autoComplete="username"
-                      className="min-w-0 flex-1 lg:w-40 border-0 bg-transparent px-3 py-2 text-sm text-[#1d1d1f] placeholder:text-[#7a7a7a] focus:ring-0 outline-none disabled:text-[#7a7a7a]"
+                      className="min-w-0 w-full sm:flex-1 lg:w-40 border-0 bg-white sm:bg-transparent rounded-[12px] sm:rounded-none px-3 py-3 sm:py-2 text-sm text-[#1d1d1f] placeholder:text-[#7a7a7a] focus:ring-0 outline-none disabled:text-[#7a7a7a]"
                     />
                     <input
                       type="password"
@@ -1666,14 +1666,14 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                       disabled={isJoined || isJoining}
                       placeholder="임시 비밀번호"
                       autoComplete="new-password"
-                      className="min-w-0 flex-1 lg:w-40 border-0 border-l border-[#e0e0e0] bg-transparent px-3 py-2 text-sm text-[#1d1d1f] placeholder:text-[#7a7a7a] focus:ring-0 outline-none disabled:text-[#7a7a7a]"
+                      className="min-w-0 w-full sm:flex-1 lg:w-40 border-0 sm:border-l sm:border-[#e0e0e0] bg-white sm:bg-transparent rounded-[12px] sm:rounded-none px-3 py-3 sm:py-2 text-sm text-[#1d1d1f] placeholder:text-[#7a7a7a] focus:ring-0 outline-none disabled:text-[#7a7a7a]"
                     />
                     {!isJoined ? (
-                      <button type="submit" disabled={isJoining} className="bg-[#19734d] hover:bg-[#2b9668] text-white px-4 py-2 rounded-full text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60">
+                      <button type="submit" disabled={isJoining} className="w-full sm:w-auto shrink-0 bg-[#19734d] hover:bg-[#2b9668] text-white px-4 py-3 sm:py-2 rounded-full text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60">
                         {isJoining ? '확인 중...' : '참여'}
                       </button>
                     ) : (
-                      <button type="button" onClick={() => { setIsJoined(false); setParticipantId(null); setCurrentUser(''); setCurrentPassword(''); lastSavedAvailabilityRef.current = null; }} className="bg-white hover:bg-[#f0f0f0] text-[#1d1d1f] px-4 py-2 rounded-full text-sm font-semibold transition-colors">
+                      <button type="button" onClick={() => { setIsJoined(false); setParticipantId(null); setCurrentUser(''); setCurrentPassword(''); lastSavedAvailabilityRef.current = null; }} className="w-full sm:w-auto shrink-0 bg-white hover:bg-[#f0f0f0] text-[#1d1d1f] px-4 py-3 sm:py-2 rounded-full text-sm font-semibold transition-colors">
                         변경
                       </button>
                     )}
@@ -1693,9 +1693,9 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
             </section>
 
             {/* 메인 투표 그리드 영역 */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 mb-5">
               {/* 내 가능 시간 칠하기 */}
-              <section className="bg-white p-5 sm:p-6 rounded-[18px] border border-[#e0e0e0] relative">
+              <section className="bg-white p-4 sm:p-6 rounded-[18px] border border-[#e0e0e0] relative">
                 {!isJoined && (
                   <div className="absolute inset-0 bg-white/80 backdrop-blur-[1px] z-20 flex flex-col items-center justify-center rounded-[18px]">
                     <AlertCircle className="text-[#7a7a7a] mb-2" size={32} />
@@ -1717,7 +1717,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                   <button 
                     onClick={handleSyncGoogleCalendar}
                     disabled={!isJoined || isCalendarAutoFilling}
-                    className="flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full bg-[#eaf1eb] text-[#1d1d1f] hover:bg-[#d6eadc] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full sm:w-auto flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full bg-[#eaf1eb] text-[#1d1d1f] hover:bg-[#d6eadc] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Wand2 size={14}/>
                     {isCalendarAutoFilling ? '캘린더 확인 중...' : '구글 캘린더 연결'}
@@ -1727,13 +1727,13 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                     type="button"
                     onClick={handleResetCurrentUserAvailability}
                     disabled={!isJoined || isCalendarAutoFilling || isSavingAvailability}
-                    className="flex items-center justify-center gap-1.5 rounded-full bg-[#f5f5f7] px-3 py-2 text-xs font-semibold text-[#333333] transition-colors hover:bg-[#e9e9eb] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="w-full sm:w-auto flex items-center justify-center gap-1.5 rounded-full bg-[#f5f5f7] px-3 py-2 text-xs font-semibold text-[#333333] transition-colors hover:bg-[#e9e9eb] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <RotateCcw size={14} />
                     초기화
                   </button>
                 </div>
-                <div className="flex items-center justify-between gap-3 mb-3 text-xs text-[#7a7a7a]">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-3 text-xs text-[#7a7a7a]">
                   <span className="inline-flex items-center gap-1"><MousePointer2 size={12}/> 클릭 또는 드래그</span>
                   <span className="flex items-center gap-3">
                   <span className="inline-flex items-center gap-1"><span className="w-3 h-3 rounded bg-[#19734d]" /> 가능</span>
@@ -1741,8 +1741,8 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                   </span>
                 </div>
 
-                <div className="overflow-x-auto select-none pb-2 relative">
-                  <table className="w-full text-center text-sm border-collapse">
+                <div className="time-grid-scroll overflow-x-auto select-none pb-2 relative">
+                  <table className="min-w-max w-full text-center text-sm border-collapse">
                     <thead>
                       <tr>
                         <th className="p-2 border-b border-r border-[#e0e0e0] w-16 bg-[#f5f5f7]"></th>
@@ -1783,7 +1783,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
               </section>
 
               {/* 그룹 전체 히트맵 */}
-              <section className="bg-white p-5 sm:p-6 rounded-[18px] border border-[#e0e0e0]">
+              <section className="bg-white p-4 sm:p-6 rounded-[18px] border border-[#e0e0e0]">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
                   <div className="flex-1">
                     <h3 className="font-semibold text-[#1d1d1f]">{isWorkMeeting ? '그룹 전체 시간' : '전체 가능 시간'}</h3>
@@ -1796,8 +1796,8 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                   </span>
                 </div>
 
-                <div className="overflow-x-auto relative pb-2">
-                  <table className="w-full text-center text-sm border-collapse">
+                <div className="time-grid-scroll overflow-x-auto relative pb-2">
+                  <table className="min-w-max w-full text-center text-sm border-collapse">
                     <thead>
                       <tr>
                         <th className="p-2 border-b border-r border-[#e0e0e0] w-16 bg-[#f5f5f7]"></th>
@@ -1848,7 +1848,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
             </div>
 
             {/* 결과 요약 및 공유 */}
-            <section className="bg-white p-5 sm:p-6 rounded-[18px] border border-[#e0e0e0]">
+            <section className="bg-white p-4 sm:p-6 rounded-[18px] border border-[#e0e0e0]">
 	               <div className="flex items-center gap-2 mb-6">
 	                  <h3 className="font-semibold text-[#1d1d1f]">{isWorkMeeting ? '결과 요약' : '정기 모임 시간 후보'}</h3>
                 </div>
@@ -1869,7 +1869,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                             <div 
                               key={idx} 
                               onClick={() => setSelectedResultIndex(idx)}
-                              className={`p-4 rounded-[18px] border flex items-center justify-between cursor-pointer transition-all
+                              className={`p-4 rounded-[18px] border flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between cursor-pointer transition-all
 	                                ${isSelected ? 'border-[#19734d] bg-[#eaf1eb]' : 'border-[#f0f0f0] bg-white hover:border-[#19734d] hover:bg-[#f5f5f7]'}`}
                             >
                               <div>
@@ -1886,7 +1886,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                                   )}
                                 </div>
                               </div>
-	                              <div className={`text-center rounded-[14px] px-3 py-2 ${isSelected ? 'bg-white' : 'bg-[#f5f5f7]'}`}>
+                              <div className={`w-full sm:w-auto text-center rounded-[14px] px-3 py-2 ${isSelected ? 'bg-white' : 'bg-[#f5f5f7]'}`}>
                                 <div className="text-xs text-[#7a7a7a]">{isWorkMeeting ? '참석' : '가능'}</div>
 	                                <div className={`font-semibold ${isSelected ? 'text-[#2b9668]' : 'text-[#333333]'}`}>{res.availableCount}명</div>
                                   <button
@@ -1896,7 +1896,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                                       setSelectedResultIndex(idx);
                                       showToast(isWorkMeeting ? '선택한 시간으로 공유 메시지를 만들었습니다.' : '선택한 시간대로 공유 메시지를 만들었습니다.');
                                     }}
-                                    className={`mt-2 rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${
+                                    className={`mt-2 w-full rounded-full px-3 py-2 sm:py-1 text-[11px] font-semibold transition-colors ${
                                       isSelected ? 'bg-[#19734d] text-white' : 'bg-white text-[#19734d] hover:bg-[#eaf1eb]'
                                     }`}
                                   >
@@ -1923,7 +1923,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                     <textarea 
                       value={shareMessage}
                       onChange={(e) => setShareMessage(e.target.value)}
-	                      className="w-full flex-1 border-0 rounded-[18px] p-4 text-sm text-[#333333] bg-[#f5f5f7] focus:outline-none focus:ring-2 focus:ring-[#2b9668] resize-none min-h-[160px] font-mono"
+                      className="w-full flex-1 border-0 rounded-[18px] p-4 text-sm leading-relaxed text-[#333333] bg-[#f5f5f7] focus:outline-none focus:ring-2 focus:ring-[#2b9668] resize-none min-h-[160px] font-sans"
                     />
                     <button 
                       onClick={() => copyToClipboard(
