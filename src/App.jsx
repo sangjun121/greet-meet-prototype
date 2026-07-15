@@ -752,15 +752,53 @@ export default function App() {
 
   };
 
+  const updateDateColumn = (date, forceMode) => {
+    if (!isJoined || !boardHours.length) return;
+
+    setAvailability(prev => {
+      const nextAvailability = { ...prev };
+
+      boardHours.forEach(hour => {
+        const slotKey = `${date}-${hour}`;
+        const currentSlotUsers = nextAvailability[slotKey] || [];
+        const hasUser = currentSlotUsers.includes(currentUser);
+
+        if (forceMode === 'add' && !hasUser) {
+          nextAvailability[slotKey] = [...currentSlotUsers, currentUser];
+        } else if (forceMode === 'remove' && hasUser) {
+          const nextSlotUsers = currentSlotUsers.filter(user => user !== currentUser);
+          if (nextSlotUsers.length > 0) nextAvailability[slotKey] = nextSlotUsers;
+          else delete nextAvailability[slotKey];
+        }
+      });
+
+      availabilityRef.current = nextAvailability;
+      pendingLocalSlotKeysRef.current = getCurrentUserSlotKeys(nextAvailability);
+      return nextAvailability;
+    });
+  };
+
   const paintSlot = (slotKey, mode) => {
     if (!slotKey || !mode || lastPaintedSlotRef.current === slotKey) return;
     lastPaintedSlotRef.current = slotKey;
     updateSlot(slotKey, mode);
   };
 
+  const paintDateColumn = (date, mode) => {
+    const columnKey = date ? `date:${date}` : null;
+    if (!date || !mode || lastPaintedSlotRef.current === columnKey) return;
+    lastPaintedSlotRef.current = columnKey;
+    updateDateColumn(date, mode);
+  };
+
   const getSlotKeyFromPoint = (x, y) => {
     const target = document.elementFromPoint(x, y);
     return target?.closest?.('[data-availability-slot]')?.dataset.availabilitySlot;
+  };
+
+  const getDateKeyFromPoint = (x, y) => {
+    const target = document.elementFromPoint(x, y);
+    return target?.closest?.('[data-availability-date]')?.dataset.availabilityDate;
   };
 
   const handleAvailabilityPointerDown = (event, slotKey) => {
@@ -780,7 +818,38 @@ export default function App() {
     activePointerIdRef.current = event.pointerId;
     activePointerTargetRef.current = event.currentTarget;
     pointerStartRef.current = {
+      type: 'slot',
       slotKey,
+      x: event.clientX,
+      y: event.clientY,
+    };
+    lastPaintedSlotRef.current = null;
+    setIsDragging(false);
+    setDragMode(newMode);
+  };
+
+  const handleDateColumnPointerDown = (event, date) => {
+    if (!isJoined) {
+      showAlert('먼저 이름과 임시 비밀번호를 입력하고 참여해주세요.');
+      return;
+    }
+    if (event.button !== undefined && event.button !== 0) return;
+
+    event.preventDefault();
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+
+    const isEverySlotAvailable = boardHours.every(hour => (
+      (availabilityRef.current[`${date}-${hour}`] || []).includes(currentUser)
+    ));
+    const newMode = isEverySlotAvailable ? 'remove' : 'add';
+
+    isDraggingRef.current = false;
+    dragModeRef.current = newMode;
+    activePointerIdRef.current = event.pointerId;
+    activePointerTargetRef.current = event.currentTarget;
+    pointerStartRef.current = {
+      type: 'date',
+      date,
       x: event.clientX,
       y: event.clientY,
     };
@@ -826,16 +895,24 @@ export default function App() {
     if (!isDraggingRef.current) {
       isDraggingRef.current = true;
       setIsDragging(true);
-      paintSlot(pointerStartRef.current.slotKey, dragModeRef.current);
+      if (pointerStartRef.current.type === 'date') {
+        paintDateColumn(pointerStartRef.current.date, dragModeRef.current);
+      } else {
+        paintSlot(pointerStartRef.current.slotKey, dragModeRef.current);
+      }
     }
 
-    paintSlot(getSlotKeyFromPoint(event.clientX, event.clientY), dragModeRef.current);
+    if (pointerStartRef.current.type === 'date') {
+      paintDateColumn(getDateKeyFromPoint(event.clientX, event.clientY), dragModeRef.current);
+    } else {
+      paintSlot(getSlotKeyFromPoint(event.clientX, event.clientY), dragModeRef.current);
+    }
   };
 
   const handleAvailabilityPointerEnd = (event) => {
     if (activePointerIdRef.current !== null && event?.pointerId !== undefined && activePointerIdRef.current !== event.pointerId) return;
 
-    const shouldToggleClick = event?.type !== 'pointercancel' && !isDraggingRef.current && pointerStartRef.current?.slotKey && dragModeRef.current;
+    const shouldToggleClick = event?.type !== 'pointercancel' && !isDraggingRef.current && pointerStartRef.current && dragModeRef.current;
 
     if (activePointerTargetRef.current && activePointerIdRef.current !== null) {
       try {
@@ -846,7 +923,11 @@ export default function App() {
     }
 
     if (shouldToggleClick) {
-      paintSlot(pointerStartRef.current.slotKey, dragModeRef.current);
+      if (pointerStartRef.current.type === 'date') {
+        paintDateColumn(pointerStartRef.current.date, dragModeRef.current);
+      } else {
+        paintSlot(pointerStartRef.current.slotKey, dragModeRef.current);
+      }
     }
 
     isDraggingRef.current = false;
@@ -1870,26 +1951,33 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                   </button>
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-3 text-xs text-[#7a7a7a]">
-                  <span className="inline-flex items-center gap-1"><MousePointer2 size={12}/> 클릭 또는 드래그</span>
+                  <span className="inline-flex items-center gap-1"><MousePointer2 size={12}/> 칸 또는 날짜 클릭/드래그</span>
                   <span className="flex items-center gap-3">
                   <span className="inline-flex items-center gap-1"><span className="w-3 h-3 rounded bg-[#19734d]" /> 가능</span>
                   <span className="inline-flex items-center gap-1"><span className="w-3 h-3 rounded bg-white border border-[#e0e0e0]" /> {isWorkMeeting ? '불가능' : '미선택'}</span>
                   </span>
                 </div>
 
-                <div className="time-grid-scroll overflow-x-auto select-none pb-2 relative">
+                <div className="time-grid-scroll overflow-x-auto select-none pb-2 relative" onPointerMove={handleAvailabilityPointerMove}>
                   <table className="min-w-max w-full text-center text-sm border-collapse">
                     <thead>
                       <tr>
                         <th className="p-2 border-b border-r border-[#e0e0e0] w-16 bg-[#f5f5f7]"></th>
                         {boardParams.dates.map(date => (
-                            <th key={date} className="p-2 border-b border-[#e0e0e0] font-semibold bg-[#f5f5f7] min-w-[70px] whitespace-nowrap text-xs text-[#333333]">
+                            <th
+                              key={date}
+                              data-availability-date={date}
+                              onPointerDown={event => handleDateColumnPointerDown(event, date)}
+                              onPointerUp={handleAvailabilityPointerEnd}
+                              onPointerCancel={handleAvailabilityPointerEnd}
+                              className="date-column-header p-2 border-b border-[#e0e0e0] font-semibold bg-[#f5f5f7] min-w-[70px] whitespace-nowrap text-xs text-[#333333] cursor-pointer transition-colors hover:bg-[#eaf1eb]"
+                            >
                             {formatColumnLabel(date)}
                           </th>
                         ))}
                       </tr>
                     </thead>
-                    <tbody onPointerMove={handleAvailabilityPointerMove}>
+                    <tbody>
                       {boardHours.map(hour => (
                         <tr key={hour}>
                           <td className="p-1 border-r border-b border-[#e0e0e0] text-xs text-[#7a7a7a] bg-[#f5f5f7] align-top h-6 tabular-nums">
@@ -2136,6 +2224,12 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
         }
         .availability-cell.is-available {
           box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+        }
+        .date-column-header {
+          touch-action: none;
+          user-select: none;
+          -webkit-user-select: none;
+          -webkit-tap-highlight-color: transparent;
         }
         .availability-cell.wave-fill {
           animation: waveFill 720ms cubic-bezier(0.16, 1, 0.3, 1) both;
