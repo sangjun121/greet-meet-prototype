@@ -564,11 +564,21 @@ export default function App() {
     ));
   }, [calendarStartDate]);
 
-  const formatColumnLabel = (value) => WEEKDAY_LABELS[value] || value.split('-').slice(1).join('/');
+  const formatColumnLabel = (value) => {
+    if (WEEKDAY_LABELS[value]) return WEEKDAY_LABELS[value];
+
+    const [year, month, day] = value.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    const weekday = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
+    return `${month}/${day} (${weekday})`;
+  };
 
   const formatResultTime = (date, hour) => {
-    const dayLabel = WEEKDAY_LABELS[date] || date.split('-').slice(1).map(d => parseInt(d, 10)).join('/');
-    return `${dayLabel} ${hour}`;
+    if (WEEKDAY_LABELS[date]) return `${WEEKDAY_LABELS[date]} ${hour}`;
+
+    const [year, month, day] = date.split('-').map(Number);
+    const weekday = ['일', '월', '화', '수', '목', '금', '토'][new Date(year, month - 1, day).getDay()];
+    return `${month}월 ${day}일(${weekday}) ${hour}`;
   };
 
   const handleCreateMeeting = async () => {
@@ -1734,7 +1744,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                       <tr>
                         <th className="p-2 border-b border-r border-[#e0e0e0] w-16 bg-[#f5f5f7]"></th>
                         {boardParams.dates.map(date => (
-                          <th key={date} className="p-2 border-b border-[#e0e0e0] font-semibold bg-[#f5f5f7] min-w-[70px] text-[#333333]">
+                            <th key={date} className="p-2 border-b border-[#e0e0e0] font-semibold bg-[#f5f5f7] min-w-[70px] whitespace-nowrap text-xs text-[#333333]">
                             {formatColumnLabel(date)}
                           </th>
                         ))}
@@ -1789,7 +1799,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                       <tr>
                         <th className="p-2 border-b border-r border-[#e0e0e0] w-16 bg-[#f5f5f7]"></th>
                         {boardParams.dates.map(date => (
-                          <th key={date} className="p-2 border-b border-[#e0e0e0] font-semibold bg-[#f5f5f7] min-w-[70px] text-[#333333]">
+                          <th key={date} className="p-2 border-b border-[#e0e0e0] font-semibold bg-[#f5f5f7] min-w-[70px] whitespace-nowrap text-xs text-[#333333]">
                             {formatColumnLabel(date)}
                           </th>
                         ))}
