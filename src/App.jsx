@@ -1685,6 +1685,9 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                       {isSavingAvailability ? '응답 저장 중...' : '임시 비밀번호로 나중에 응답을 수정할 수 있어요.'}
                     </p>
                   )}
+                  <p className="mt-1 text-right text-xs text-[#8a6418]">
+                    초기 버전이라 실제로 사용하는 비밀번호는 입력하지 마세요.
+                  </p>
                 </form>
               </div>
             </section>
