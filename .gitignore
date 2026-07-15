@@ -10,6 +10,9 @@ build/
 .env.*
 !.env.example
 
+# Local Supabase setup notes
+SUPABASE_SETUP.md
+
 # Logs
 npm-debug.log*
 yarn-debug.log*
