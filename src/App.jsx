@@ -348,6 +348,12 @@ export default function App() {
   const [isCalendarAutoFilling, setIsCalendarAutoFilling] = useState(false);
   const [dialog, setDialog] = useState(null);
   const lastSavedAvailabilityRef = useRef(null);
+  const availabilityRef = useRef(availability);
+  const isDraggingRef = useRef(false);
+  const dragModeRef = useRef(null);
+  const activePointerIdRef = useRef(null);
+  const activePointerTargetRef = useRef(null);
+  const lastPaintedSlotRef = useRef(null);
   const googleAccessTokenRef = useRef(null);
 
   const showAlert = message => {
@@ -365,6 +371,10 @@ export default function App() {
     setDialog(null);
     onConfirm?.();
   };
+
+  useEffect(() => {
+    availabilityRef.current = availability;
+  }, [availability]);
 
   // --- URL Hash 기반 라우팅 ---
   useEffect(() => {
@@ -682,21 +692,42 @@ export default function App() {
       if (forceMode === 'add' && !hasUser) newSlotUsers.push(currentUser);
       else if (forceMode === 'remove' && hasUser) newSlotUsers = newSlotUsers.filter(u => u !== currentUser);
 
-      return { ...prev, [slotKey]: newSlotUsers };
+      const nextAvailability = { ...prev };
+      if (newSlotUsers.length > 0) nextAvailability[slotKey] = newSlotUsers;
+      else delete nextAvailability[slotKey];
+
+      availabilityRef.current = nextAvailability;
+      return nextAvailability;
     });
 
   };
 
-  const handleMouseDown = (slotKey) => {
+  const paintSlot = (slotKey, mode) => {
+    if (!slotKey || !mode || lastPaintedSlotRef.current === slotKey) return;
+    lastPaintedSlotRef.current = slotKey;
+    updateSlot(slotKey, mode);
+  };
+
+  const handleAvailabilityPointerDown = (event, slotKey) => {
     if (!isJoined) {
       showAlert('먼저 이름과 임시 비밀번호를 입력하고 참여해주세요.');
       return;
     }
-    const hasUser = (availability[slotKey] || []).includes(currentUser);
+    if (event.button !== undefined && event.button !== 0) return;
+
+    event.preventDefault();
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+
+    const hasUser = (availabilityRef.current[slotKey] || []).includes(currentUser);
     const newMode = hasUser ? 'remove' : 'add';
+    isDraggingRef.current = true;
+    dragModeRef.current = newMode;
+    activePointerIdRef.current = event.pointerId;
+    activePointerTargetRef.current = event.currentTarget;
+    lastPaintedSlotRef.current = null;
     setIsDragging(true);
     setDragMode(newMode);
-    updateSlot(slotKey, newMode);
+    paintSlot(slotKey, newMode);
   };
 
   const handleResetCurrentUserAvailability = () => {
@@ -714,6 +745,7 @@ export default function App() {
           if (remainingUsers.length > 0) nextAvailability[slotKey] = remainingUsers;
         });
 
+        availabilityRef.current = nextAvailability;
         return nextAvailability;
       });
       setWaveSlots({});
@@ -722,18 +754,42 @@ export default function App() {
     });
   };
 
-  const handleMouseEnter = (slotKey) => {
-    if (isDragging && dragMode) updateSlot(slotKey, dragMode);
+  const handleAvailabilityPointerMove = (event) => {
+    if (!isDraggingRef.current || !dragModeRef.current || activePointerIdRef.current !== event.pointerId) return;
+
+    event.preventDefault();
+    const target = document.elementFromPoint(event.clientX, event.clientY);
+    const cell = target?.closest?.('[data-availability-slot]');
+    paintSlot(cell?.dataset.availabilitySlot, dragModeRef.current);
   };
 
-  const handleMouseUp = () => {
+  const handleAvailabilityPointerEnd = (event) => {
+    if (activePointerIdRef.current !== null && event?.pointerId !== undefined && activePointerIdRef.current !== event.pointerId) return;
+
+    if (activePointerTargetRef.current && activePointerIdRef.current !== null) {
+      try {
+        activePointerTargetRef.current.releasePointerCapture?.(activePointerIdRef.current);
+      } catch {
+        // Pointer capture can already be released by the browser.
+      }
+    }
+
+    isDraggingRef.current = false;
+    dragModeRef.current = null;
+    activePointerIdRef.current = null;
+    activePointerTargetRef.current = null;
+    lastPaintedSlotRef.current = null;
     setIsDragging(false);
     setDragMode(null);
   };
 
   useEffect(() => {
-    window.addEventListener('mouseup', handleMouseUp);
-    return () => window.removeEventListener('mouseup', handleMouseUp);
+    window.addEventListener('pointerup', handleAvailabilityPointerEnd);
+    window.addEventListener('pointercancel', handleAvailabilityPointerEnd);
+    return () => {
+      window.removeEventListener('pointerup', handleAvailabilityPointerEnd);
+      window.removeEventListener('pointercancel', handleAvailabilityPointerEnd);
+    };
   }, []);
 
   useEffect(() => {
@@ -1753,7 +1809,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                         ))}
                       </tr>
                     </thead>
-                    <tbody onMouseLeave={handleMouseUp}>
+                    <tbody onPointerMove={handleAvailabilityPointerMove}>
                       {boardHours.map(hour => (
                         <tr key={hour}>
                           <td className="p-1 border-r border-b border-[#e0e0e0] text-xs text-[#7a7a7a] bg-[#f5f5f7] align-top h-6 tabular-nums">
@@ -1766,8 +1822,10 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                             return (
                               <td 
                                 key={slotKey}
-                                onMouseDown={() => handleMouseDown(slotKey)}
-                                onMouseEnter={() => handleMouseEnter(slotKey)}
+                                data-availability-slot={slotKey}
+                                onPointerDown={event => handleAvailabilityPointerDown(event, slotKey)}
+                                onPointerUp={handleAvailabilityPointerEnd}
+                                onPointerCancel={handleAvailabilityPointerEnd}
                                 style={waveIndex !== undefined ? { '--wave-delay': `${waveIndex * 18}ms` } : undefined}
                                 className={`availability-cell border border-[#e0e0e0] cursor-pointer
                                   ${isAvailable ? 'is-available bg-[#19734d] border-[#2b9668]' : 'bg-white hover:bg-[#f0f0f0]'}
@@ -1980,6 +2038,10 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
         .availability-cell {
           position: relative;
           height: 24px;
+          touch-action: none;
+          user-select: none;
+          -webkit-user-select: none;
+          -webkit-tap-highlight-color: transparent;
           transform: translateZ(0);
           transition:
             background-color 220ms cubic-bezier(0.2, 0, 0, 1),
