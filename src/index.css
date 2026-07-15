@@ -169,6 +169,16 @@
     padding: 18px 14px 16px;
   }
 
+  .home-form-section {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
+
+  .home-form-card {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
   .preview-caption,
   .preview-footer {
     font-size: 11px;
@@ -179,28 +189,31 @@
   }
 
   .calendar-picker-panel {
-    padding: 12px !important;
+    padding: 14px 8px !important;
   }
 
   .calendar-picker-grid {
-    grid-template-columns: 0 repeat(7, minmax(44px, 1fr)) 0;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 4px;
     padding-bottom: 2px;
   }
 
   .calendar-date-button {
     width: 100%;
-    min-width: 44px;
-    height: 44px !important;
-    border-radius: 12px;
-    font-size: 15px;
+    min-width: 0;
+    height: auto !important;
+    min-height: 40px;
+    aspect-ratio: 1 / 1;
+    border-radius: 11px;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
   }
 
   .calendar-month-label,
-  .calendar-year-label {
-    visibility: hidden;
-    width: 0;
-    overflow: hidden;
+  .calendar-year-label,
+  .calendar-side-spacer {
+    display: none;
   }
 
   .modal-actions {

@@ -1394,9 +1394,9 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
               </div>
             </section>
 
-            <section className="max-w-3xl mx-auto px-4 animate-slide-up delay-300">
+            <section className="home-form-section max-w-3xl mx-auto px-4 animate-slide-up delay-300">
             {/* 약속 만들기 */}
-            <div className="w-full bg-white p-5 sm:p-8 rounded-[18px] border border-[#e0e0e0]">
+            <div className="home-form-card w-full bg-white p-5 sm:p-8 rounded-[18px] border border-[#e0e0e0]">
               <div className="mb-7">
                 <p className="text-sm font-semibold text-[#1d1d1f] mb-2">{meetingType === MEETING_TYPES.REGULAR ? '새 정기 모임' : '새 일정'}</p>
                 <h2 className="text-2xl sm:text-3xl font-semibold mb-2 text-[#1d1d1f]">
@@ -1532,13 +1532,13 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                     </div>
 
                     <div className="calendar-picker-grid grid grid-cols-[52px_repeat(7,minmax(0,1fr))_52px] gap-1 items-center text-center">
-                      <div />
+                      <div className="calendar-side-spacer" />
                       {['일', '월', '화', '수', '목', '금', '토'].map((dayLabel, index) => (
 	                        <div key={`${dayLabel}-${index}`} className="text-sm font-semibold text-[#333333] py-1">
                           {dayLabel}
                         </div>
                       ))}
-                      <div />
+                      <div className="calendar-side-spacer" />
 
                       {calendarWeeks.map((week, weekIndex) => {
                         const firstDate = week[0];
