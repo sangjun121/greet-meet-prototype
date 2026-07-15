@@ -3,5 +3,5 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  base: '/greet-meet-prototype/',
+  base: '/when-7-meet/',
 });
