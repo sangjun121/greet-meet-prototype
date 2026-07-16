@@ -1408,6 +1408,19 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
             </span>
             <span className="text-xl font-bold">when7meet</span>
           </button>
+          <a
+            href="https://github.com/sangjun121/when-7-meet"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="when7meet GitHub 저장소 열기"
+            className="inline-flex rounded-sm transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2b9668]"
+          >
+            <img
+              src="https://img.shields.io/github/stars/sangjun121/when-7-meet?style=social"
+              alt="Star on GitHub"
+              className="h-5"
+            />
+          </a>
         </div>
       </header>
 
