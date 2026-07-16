@@ -123,8 +123,37 @@
   touch-action: auto;
 }
 
+.calendar-picker-panel {
+  overflow: hidden;
+}
+
+.calendar-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  gap: clamp(3px, 1vw, 8px);
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+
+.calendar-weekday-label {
+  min-width: 0;
+  font-size: clamp(11px, 2.6vw, 14px);
+  line-height: 1.2;
+}
+
 .calendar-date-button {
-  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  height: clamp(22px, 7vw, 34px) !important;
+  min-height: 0;
+  padding: 0;
+  border-radius: clamp(7px, 2.4vw, 10px);
+  font-size: clamp(11px, 3.4vw, 15px);
+  line-height: 1;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
@@ -170,13 +199,13 @@
   }
 
   .home-form-section {
-    padding-left: 6px !important;
-    padding-right: 6px !important;
+    padding-left: 2px !important;
+    padding-right: 2px !important;
   }
 
   .home-form-card {
-    padding-left: 10px !important;
-    padding-right: 10px !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
   }
 
   .preview-caption,
@@ -189,31 +218,7 @@
   }
 
   .calendar-picker-panel {
-    padding: 14px 8px !important;
-  }
-
-  .calendar-picker-grid {
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 4px;
-    padding-bottom: 2px;
-  }
-
-  .calendar-date-button {
-    width: 100%;
-    min-width: 0;
-    height: auto !important;
-    min-height: 40px;
-    aspect-ratio: 1 / 1;
-    border-radius: 11px;
-    font-size: 14px;
-    line-height: 1;
-    padding: 0;
-  }
-
-  .calendar-month-label,
-  .calendar-year-label,
-  .calendar-side-spacer {
-    display: none;
+    padding: 14px 6px !important;
   }
 
   .modal-actions {

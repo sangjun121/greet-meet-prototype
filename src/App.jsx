@@ -577,6 +577,37 @@ export default function App() {
     }
   };
 
+  const handleShareMessageToKakao = async () => {
+    if (!shareMessage.trim()) {
+      showAlert('공유할 메시지가 없습니다.');
+      return;
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: boardParams?.title || 'when7meet',
+          text: shareMessage,
+        });
+        showToast('공유 창을 열었습니다.');
+        return;
+      } catch (error) {
+        if (error?.name === 'AbortError') return;
+      }
+    }
+
+    copyToClipboard(shareMessage, '메시지를 복사했습니다. 카카오톡에 붙여넣어 공유해주세요.');
+  };
+
+  const handleShareMessageToSlack = () => {
+    if (!shareMessage.trim()) {
+      showAlert('공유할 메시지가 없습니다.');
+      return;
+    }
+
+    copyToClipboard(shareMessage, '메시지를 복사했습니다. Slack에 붙여넣어 공유해주세요.');
+  };
+
   // --- 메인 페이지 핸들러 ---
   const handleToggleCalendarDate = (date) => {
     const dateKey = formatDateKey(date);
@@ -1442,23 +1473,22 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                   </>
                 ) : (
                   <>
-                    <span className="inline-block animate-word-pop delay-100">모두의</span>{' '}
-                    <span className="inline-block animate-word-pop delay-300">시간을</span><br />
-                    <span className="inline-block animate-word-pop delay-500">가볍게</span>{' '}
-                    <span className="inline-block animate-word-pop delay-700">맞춰요</span>
+                    <span className="inline-block animate-word-pop delay-100">시간</span>{' '}
+                    <span className="inline-block animate-word-pop delay-300">맞추기,</span><br />
+                    <span className="inline-block animate-word-pop delay-500">링크</span>{' '}
+                    <span className="inline-block animate-word-pop delay-700">하나로 끝내요</span>
                   </>
                 )}
               </h2>
               <p className="hero-description mx-auto mt-6 max-w-2xl text-base sm:text-xl leading-relaxed text-[#333333] animate-fade-up delay-900">
                 {meetingType === MEETING_TYPES.REGULAR
                   ? '월요일부터 일요일까지 가능한 시간을 모아 고정 모임 시간을 찾습니다.'
-                  : '후보 날짜를 고르고, 각자 가능한 시간을 칠한 뒤 응답 현황까지 한 흐름에서 확인합니다.'}
+                  : '날짜만 정해두면, 각자 가능한 시간을 표시하고 겹치는 시간까지 바로 볼 수 있어요.'}
               </p>
               </div>
               <div className="hero-preview" aria-hidden="true">
                 <div className="preview-caption">
                   <strong>이번 주 응답</strong>
-                  <span>겹치는 시간이 보입니다</span>
                 </div>
                 <div className="preview-grid">
                   {['월', '화', '수', '목', '금', '토', '일'].map(day => (
@@ -1469,7 +1499,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                   ))}
                 </div>
                 <div className="preview-footer">
-                  <span className="inline-flex items-center gap-2"><span className="preview-marker" /> 모두의 가능 시간</span>
+                  <span className="inline-flex items-center gap-2"><span className="preview-marker" /> 모두가 가능한 시간</span>
                   <span>when7meet</span>
                 </div>
               </div>
@@ -1484,7 +1514,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                   {meetingType === MEETING_TYPES.REGULAR ? '반복해서 만날 요일을 고르세요' : '가능한 날짜를 먼저 고르세요'}
                 </h2>
                 <p className="text-sm text-[#7a7a7a]">
-                  {meetingType === MEETING_TYPES.REGULAR ? '월~일 중 가능한 요일과 시간대를 정하면 정기 모임 보드가 만들어집니다.' : '후보 날짜와 시간대를 정하면 바로 투표 보드가 만들어집니다.'}
+                  {meetingType === MEETING_TYPES.REGULAR ? '반복할 요일과 시간대를 고르면 바로 공유할 수 있는 보드가 만들어져요.' : '날짜와 시간대를 고르면 바로 공유할 수 있는 보드가 만들어져요.'}
                 </p>
               </div>
               
@@ -1612,25 +1642,19 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                       </button>
                     </div>
 
-                    <div className="calendar-picker-grid grid grid-cols-[52px_repeat(7,minmax(0,1fr))_52px] gap-1 items-center text-center">
-                      <div className="calendar-side-spacer" />
+                    <div className="calendar-picker-grid grid grid-cols-7 gap-1 items-center text-center">
                       {['일', '월', '화', '수', '목', '금', '토'].map((dayLabel, index) => (
-	                        <div key={`${dayLabel}-${index}`} className="text-sm font-semibold text-[#333333] py-1">
+	                        <div key={`${dayLabel}-${index}`} className="calendar-weekday-label text-sm font-semibold text-[#333333] py-1">
                           {dayLabel}
                         </div>
                       ))}
-                      <div className="calendar-side-spacer" />
 
                       {calendarWeeks.map((week, weekIndex) => {
                         const firstDate = week[0];
-                        const previousDate = weekIndex > 0 ? calendarWeeks[weekIndex - 1][6] : null;
                         const today = new Date();
 
                         return (
                           <React.Fragment key={formatDateKey(firstDate)}>
-	                            <div className="calendar-month-label text-right pr-2 text-sm font-semibold text-[#1d1d1f]">
-                              {formatMonthLabel(firstDate, previousDate)}
-                            </div>
                             {week.map(date => {
                               const dateKey = formatDateKey(date);
                               const isSelected = selectedDates.includes(dateKey);
@@ -1642,7 +1666,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                                   type="button"
                                   aria-pressed={isSelected}
                                   onClick={() => handleToggleCalendarDate(date)}
-                                  className={`calendar-date-button h-10 rounded-[10px] border text-base font-semibold tabular-nums transition-colors
+                                  className={`calendar-date-button rounded-[10px] border text-base font-semibold tabular-nums transition-colors
                                     ${isSelected
                                       ? 'bg-[#19734d] border-[#19734d] text-white'
                                       : isToday
@@ -1654,9 +1678,6 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                                 </button>
                               );
                             })}
-	                            <div className="calendar-year-label text-left pl-2 text-sm font-semibold text-[#1d1d1f]">
-                              {firstDate.getFullYear()}
-                            </div>
                           </React.Fragment>
                         );
                       })}
@@ -1713,8 +1734,8 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                       <label className="block text-sm font-semibold text-[#333333] mb-2">응답 완료 알림</label>
                       <p className="text-xs leading-relaxed text-[#7a7a7a]">
                         {isCreatorNotificationEnabled
-                          ? '예상 참여 인원만큼 모두가 응답하면 Slack으로 알려드려요.'
-                          : '모두가 응답한 뒤 알림을 받아볼까요?'}
+                          ? '예상한 인원이 다 응답하면 Slack으로 알려드려요.'
+                          : '사람들이 다 응답하면 알려드릴까요?'}
                       </p>
                     </div>
                     <button
@@ -2014,7 +2035,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                   <div className="flex-1">
                     <h3 className="font-semibold text-[#1d1d1f]">{isWorkMeeting ? '그룹 전체 시간' : '전체 가능 시간'}</h3>
                     <p className="text-xs text-[#7a7a7a] mt-1">
-                      진한 파랑일수록 가능한 사람이 많습니다.
+                      색이 진할수록 가능한 사람이 많은 시간이에요.
                     </p>
                   </div>
                   <span className="text-xs text-[#7a7a7a] flex items-center gap-1">
@@ -2076,16 +2097,16 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
             {/* 결과 요약 및 공유 */}
             <section className="bg-white p-4 sm:p-6 rounded-[18px] border border-[#e0e0e0]">
 	               <div className="flex items-center gap-2 mb-6">
-	                  <h3 className="font-semibold text-[#1d1d1f]">{isWorkMeeting ? '결과 요약' : '정기 모임 시간 후보'}</h3>
+	                  <h3 className="font-semibold text-[#1d1d1f]">{isWorkMeeting ? '겹치는 시간 요약' : '정기 모임 시간 후보'}</h3>
                 </div>
                 
                 <div className={`grid grid-cols-1 ${isWorkMeeting ? 'md:grid-cols-2' : 'lg:grid-cols-[0.9fr_1.1fr]'} gap-8`}>
                   {/* Top 결과 카드 */}
                   <div>
-	                    <h4 className="text-sm font-semibold text-[#7a7a7a] mb-3">{isWorkMeeting ? '가장 많이 겹친 시간' : '가장 많이 가능한 시간'}</h4>
+	                    <h4 className="text-sm font-semibold text-[#7a7a7a] mb-3">{isWorkMeeting ? '함께 가능한 사람이 많은 시간이에요' : '함께 가능한 사람이 많은 시간이에요'}</h4>
                     {results.length === 0 ? (
 	                      <div className="text-sm text-[#7a7a7a] bg-[#f5f5f7] p-5 rounded-[18px] border border-[#f0f0f0] text-center py-8">
-                        {isWorkMeeting ? '아직 선택된 가능 시간이 없습니다.' : '아직 선택된 가능 시간이 없습니다.'}
+                        아직 표시된 가능 시간이 없어요.
                       </div>
                     ) : (
                       <div className="space-y-3">
@@ -2103,31 +2124,18 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
 	                                {idx !== 0 && isSelected && <span className="text-xs font-semibold text-[#333333] bg-white px-2 py-0.5 rounded-full mb-1 inline-block">선택됨</span>}
 	                                <div className={`font-semibold ${isSelected ? 'text-[#2b9668] text-lg' : 'text-[#1d1d1f]'}`}>{res.time}</div>
                                 <div className="text-xs text-[#7a7a7a] mt-1">
-                                  가능: {res.available.join(', ')}
+                                  가능한 사람: {res.available.join(', ')}
                                   {isWorkMeeting && (
                                     <>
                                       <br/>
-                                      <span className="text-[#7a7a7a]">불가능: {res.unavailable.length > 0 ? res.unavailable.join(', ') : '없음'}</span>
+                                      <span className="text-[#7a7a7a]">불가능한 사람: {res.unavailable.length > 0 ? res.unavailable.join(', ') : '없음'}</span>
                                     </>
                                   )}
                                 </div>
                               </div>
                               <div className={`w-full sm:w-auto text-center rounded-[14px] px-3 py-2 ${isSelected ? 'bg-white' : 'bg-[#f5f5f7]'}`}>
-                                <div className="text-xs text-[#7a7a7a]">{isWorkMeeting ? '참석' : '가능'}</div>
+                                <div className="text-xs text-[#7a7a7a]">가능 인원</div>
 	                                <div className={`font-semibold ${isSelected ? 'text-[#2b9668]' : 'text-[#333333]'}`}>{res.availableCount}명</div>
-                                  <button
-                                    type="button"
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      setSelectedResultIndex(idx);
-                                      showToast(isWorkMeeting ? '선택한 시간으로 공유 메시지를 만들었습니다.' : '선택한 시간대로 공유 메시지를 만들었습니다.');
-                                    }}
-                                    className={`mt-2 w-full rounded-full px-3 py-2 sm:py-1 text-[11px] font-semibold transition-colors ${
-                                      isSelected ? 'bg-[#19734d] text-white' : 'bg-white text-[#19734d] hover:bg-[#eaf1eb]'
-                                    }`}
-                                  >
-                                    이 시간으로 정하기
-                                  </button>
                               </div>
                             </div>
                           );
