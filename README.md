@@ -27,6 +27,18 @@
 
 ![when7meet 홈 화면](docs/images/home.png)
 
+## 서비스 소개 영상
+
+<p align="center">
+  <a href="https://youtu.be/1qovuK9oxdU">
+    <img
+      src="https://img.youtube.com/vi/1qovuK9oxdU/hqdefault.jpg"
+      alt="when7meet 서비스 소개 영상"
+      width="720"
+    />
+  </a>
+</p>
+
 ## 서비스를 만든 이유
 
 회의나 스터디 시간을 정할 때 가장 귀찮은 일은 모두가 가능한 시간을 묻고, 겹치는 시간을 직접 확인하는 과정입니다.
