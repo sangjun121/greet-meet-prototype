@@ -126,18 +126,18 @@
 .lunch-feature-control {
   position: relative;
   display: flex;
-  width: auto;
+  width: max-content;
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding-top: 68px;
+  align-self: center;
 }
 
 .lunch-feature-callout {
   position: absolute;
-  top: 0;
+  bottom: calc(100% + 10px);
   left: 50%;
-  z-index: 30;
+  z-index: 10;
   width: min(230px, calc(100vw - 32px));
   box-sizing: border-box;
   transform: translateX(-50%);
@@ -150,6 +150,32 @@
   line-height: 1.55;
   text-align: left;
   box-shadow: 0 3px 8px rgba(25, 115, 77, 0.08);
+}
+
+.lunch-feature-callout-close {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 999px;
+  color: #397154;
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.lunch-feature-callout-close:hover {
+  background: #d6eadc;
+  color: #19734d;
+}
+
+.lunch-feature-callout-close:focus-visible {
+  outline: 2px solid #19734d;
+  outline-offset: 2px;
 }
 
 .lunch-feature-callout p {
@@ -272,10 +298,6 @@
   }
 
   .modal-actions > button {
-    width: 100%;
-  }
-
-  .lunch-feature-control {
     width: 100%;
   }
 

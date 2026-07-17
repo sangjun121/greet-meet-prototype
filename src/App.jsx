@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Copy, CheckCircle2, AlertCircle, MessageSquare, Info, MousePointer2, Calendar, Link as LinkIcon, ArrowRight, Wand2, RotateCcw, ChevronLeft, ChevronRight, Clock, Users } from 'lucide-react';
+import { Copy, CheckCircle2, AlertCircle, MessageSquare, Info, MousePointer2, Calendar, Link as LinkIcon, ArrowRight, Wand2, RotateCcw, ChevronLeft, ChevronRight, Clock, Users, X } from 'lucide-react';
 import { createMeeting as createRemoteMeeting, getMeetingCount, joinMeeting as joinRemoteMeeting, loadMeeting, loadMeetingByShareCode, saveParticipantAvailability, subscribeToMeeting } from './lib/boardApi';
 import { isSupabaseConfigured } from './lib/supabase';
 
@@ -404,6 +404,7 @@ export default function App() {
   const [googleCalendars, setGoogleCalendars] = useState([]);
   const [selectedCalendarIds, setSelectedCalendarIds] = useState([]);
   const [isCalendarAutoFilling, setIsCalendarAutoFilling] = useState(false);
+  const [isLunchHintVisible, setIsLunchHintVisible] = useState(true);
   const [dialog, setDialog] = useState(null);
   const lastSavedAvailabilityRef = useRef(null);
   const availabilityRef = useRef(availability);
@@ -2242,32 +2243,42 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                     </p>
                 </div>
                 <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-end">
-                    <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                    <div className="flex w-full flex-col items-center gap-2 sm:w-auto sm:flex-row">
                       {isWorkMeeting && (
                         <button
                           type="button"
                           onClick={handleSyncGoogleCalendar}
                           disabled={!hasActiveParticipantSession || isCalendarAutoFilling}
-                          className="w-full sm:w-auto flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full bg-[#eaf1eb] text-[#1d1d1f] hover:bg-[#d6eadc] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex items-center justify-center gap-1.5 rounded-full bg-[#eaf1eb] px-3 py-2 text-xs font-semibold text-[#1d1d1f] transition-colors hover:bg-[#d6eadc] disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           <Wand2 size={14}/>
                           {isCalendarAutoFilling ? '캘린더 확인 중...' : '구글 캘린더 연결'}
                         </button>
                       )}
                       <div className="lunch-feature-control">
-                        <div className="lunch-feature-callout" role="note">
-                          <span className="mb-1 inline-flex rounded-full bg-[#d6eadc] px-2 py-0.5 font-semibold text-[#19734d]">
-                            새로운 기능 구경하기
-                          </span>
-                          <p>이제 우테코 점심시간을 간편하게 제외할 수 있어요!</p>
-                          <span className="lunch-feature-callout-arrow" aria-hidden="true" />
-                        </div>
+                        {isLunchHintVisible && hasActiveParticipantSession && (
+                          <div className="lunch-feature-callout" role="note">
+                            <button
+                              type="button"
+                              className="lunch-feature-callout-close"
+                              aria-label="새로운 기능 안내 닫기"
+                              onClick={() => setIsLunchHintVisible(false)}
+                            >
+                              <X size={14} />
+                            </button>
+                            <span className="mb-1 inline-flex rounded-full bg-[#d6eadc] px-2 py-0.5 font-semibold text-[#19734d]">
+                              새로운 기능 구경하기
+                            </span>
+                            <p>이제 우테코 점심시간을 간편하게 제외할 수 있어요!</p>
+                            <span className="lunch-feature-callout-arrow" aria-hidden="true" />
+                          </div>
+                        )}
                         <button
                           type="button"
                           onClick={handleExcludeLunchTime}
                           disabled={!hasActiveParticipantSession || isCalendarAutoFilling || isSavingAvailability || !hasLunchTimeSlots}
                           title={hasLunchTimeSlots ? '11시 30분부터 13시까지의 점심시간을 제외합니다.' : '현재 시간대에 점심시간 슬롯이 없습니다.'}
-                          className="w-full sm:w-auto flex items-center justify-center gap-1.5 rounded-full bg-[#eaf1eb] px-3 py-2 text-xs font-semibold text-[#19734d] transition-colors hover:bg-[#d6eadc] disabled:cursor-not-allowed disabled:opacity-50"
+                          className="flex items-center justify-center gap-1.5 rounded-full bg-[#eaf1eb] px-3 py-2 text-xs font-semibold text-[#19734d] transition-colors hover:bg-[#d6eadc] disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           <Clock size={14} />
                           점심시간 제외하기
@@ -2277,7 +2288,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                         type="button"
                         onClick={handleResetCurrentUserAvailability}
                         disabled={!hasActiveParticipantSession || isCalendarAutoFilling || isSavingAvailability}
-                        className="w-full sm:w-auto flex items-center justify-center gap-1.5 rounded-full bg-[#f5f5f7] px-3 py-2 text-xs font-semibold text-[#333333] transition-colors hover:bg-[#e9e9eb] disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex items-center justify-center gap-1.5 rounded-full bg-[#f5f5f7] px-3 py-2 text-xs font-semibold text-[#333333] transition-colors hover:bg-[#e9e9eb] disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <RotateCcw size={14} />
                         초기화
