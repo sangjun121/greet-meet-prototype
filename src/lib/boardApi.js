@@ -141,6 +141,15 @@ export const saveParticipantAvailability = async ({ meetingId, participantId, pa
 export const subscribeToMeeting = (meetingId, onChange) => {
   if (!supabase) return () => {};
 
+  let refreshTimer = null;
+  const scheduleRefresh = () => {
+    if (refreshTimer !== null) clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(() => {
+      refreshTimer = null;
+      onChange();
+    }, 120);
+  };
+
   const channel = supabase
     .channel(`meeting:${meetingId}`)
     .on('postgres_changes', {
@@ -148,16 +157,17 @@ export const subscribeToMeeting = (meetingId, onChange) => {
       schema: 'public',
       table: 'participants',
       filter: `meeting_id=eq.${meetingId}`,
-    }, onChange)
+    }, scheduleRefresh)
     .on('postgres_changes', {
       event: '*',
       schema: 'public',
       table: 'responses',
       filter: `meeting_id=eq.${meetingId}`,
-    }, onChange)
+    }, scheduleRefresh)
     .subscribe();
 
   return () => {
+    if (refreshTimer !== null) clearTimeout(refreshTimer);
     supabase.removeChannel(channel);
   };
 };

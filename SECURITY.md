@@ -1,6 +1,6 @@
 # Security Policy
 
-Timelink is currently an early beta service. Please avoid entering real passwords or sensitive personal information while using it.
+Moitime is currently an early beta service. Please avoid entering real passwords or sensitive personal information while using it.
 
 ## Supported Versions
 

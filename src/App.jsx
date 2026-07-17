@@ -75,6 +75,14 @@ const loadGoogleIdentityScript = () => {
   return googleIdentityScriptPromise;
 };
 
+const getUserFacingErrorMessage = (error, fallbackMessage) => {
+  const message = typeof error?.message === 'string' ? error.message : '';
+  if (!message || error?.name === 'TypeError' || message.startsWith('TypeError')) {
+    return fallbackMessage;
+  }
+  return message;
+};
+
 const requestGoogleAccessToken = async () => {
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim();
 
@@ -363,6 +371,9 @@ export default function App() {
   const lastPaintedSlotRef = useRef(null);
   const lastGestureCellRef = useRef(null);
   const pointerEndHandlerRef = useRef(null);
+  const availabilitySaveQueueRef = useRef(Promise.resolve());
+  const latestAvailabilitySaveSignatureRef = useRef(null);
+  const realtimeRefreshRequestRef = useRef(0);
   const googleAccessTokenRef = useRef(null);
 
   const showAlert = message => {
@@ -416,6 +427,10 @@ export default function App() {
       .filter(([, users]) => Array.isArray(users) && users.includes(currentUserRef.current))
       .map(([slotKey]) => slotKey)
       .sort()
+  );
+
+  const areSlotKeyListsEqual = (first, second) => (
+    JSON.stringify(first || []) === JSON.stringify(second || [])
   );
 
   const setAvailabilitySafely = (nextAvailability, { markLocalPending = false } = {}) => {
@@ -526,7 +541,7 @@ export default function App() {
       } catch (error) {
         if (!isActive || window.location.hash !== hash) return;
         setIsBoardLoading(false);
-        setBoardLoadError(error instanceof Error ? error.message : '모임 정보를 불러오지 못했습니다.');
+        setBoardLoadError(getUserFacingErrorMessage(error, '모임 정보를 불러오지 못했습니다.'));
       }
     };
 
@@ -543,13 +558,27 @@ export default function App() {
     let isActive = true;
 
     const refreshBoard = async () => {
+      const requestId = realtimeRefreshRequestRef.current + 1;
+      realtimeRefreshRequestRef.current = requestId;
+
       try {
         const remoteBoard = await loadMeeting(boardParams.id);
-        if (!isActive) return;
+        if (!isActive || requestId !== realtimeRefreshRequestRef.current) return;
         setParticipants(remoteBoard.participants);
+
+        const pendingSlotKeys = pendingLocalSlotKeysRef.current;
+        if (
+          pendingSlotKeys
+          && areSlotKeyListsEqual(getCurrentUserSlotKeys(remoteBoard.availability), pendingSlotKeys)
+        ) {
+          pendingLocalSlotKeysRef.current = null;
+        }
+
         setAvailabilitySafely(mergeAvailabilityWithPendingLocal(remoteBoard.availability));
       } catch (error) {
-        if (isActive) showToast(error instanceof Error ? error.message : '응답을 새로고침하지 못했습니다.');
+        if (isActive && requestId === realtimeRefreshRequestRef.current) {
+          showToast(getUserFacingErrorMessage(error, '응답을 새로고침하지 못했습니다.'));
+        }
       }
     };
 
@@ -613,7 +642,7 @@ export default function App() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: boardParams?.title || 'Timelink',
+          title: boardParams?.title || 'Moitime',
           text: shareMessage,
         });
         showToast('공유 창을 열었습니다.');
@@ -727,7 +756,7 @@ export default function App() {
       ));
       window.location.hash = `board?id=${encodeURIComponent(meetingId)}`;
     } catch (error) {
-      showAlert(error instanceof Error ? error.message : '모임을 만들지 못했습니다.');
+      showAlert(getUserFacingErrorMessage(error, '모임을 만들지 못했습니다.'));
     } finally {
       setIsCreatingMeeting(false);
     }
@@ -779,7 +808,7 @@ export default function App() {
       if (!isExistingParticipant) setParticipants(prev => [...prev, participant.name]);
       showToast(isExistingParticipant ? '기존 응답을 불러왔습니다.' : `${participant.name}님으로 참여했습니다.`);
     } catch (error) {
-      setParticipantAuthError(error instanceof Error ? error.message : '모임 참여에 실패했습니다.');
+      setParticipantAuthError(getUserFacingErrorMessage(error, '모임 참여에 실패했습니다.'));
     } finally {
       setIsJoining(false);
     }
@@ -1131,28 +1160,35 @@ export default function App() {
       .map(([slotKey]) => slotKey)
       .sort();
     const saveSignature = `${participantId}:${JSON.stringify(slotKeys)}`;
+    latestAvailabilitySaveSignatureRef.current = saveSignature;
 
     if (lastSavedAvailabilityRef.current === saveSignature) return undefined;
 
     const timer = window.setTimeout(async () => {
-      setIsSavingAvailability(true);
+      availabilitySaveQueueRef.current = availabilitySaveQueueRef.current
+        .catch(() => {})
+        .then(async () => {
+          setIsSavingAvailability(true);
 
-      try {
-        await saveParticipantAvailability({
-          meetingId: boardParams.id,
-          participantId,
-          password: currentPassword,
-          slotKeys,
+          try {
+            await saveParticipantAvailability({
+              meetingId: boardParams.id,
+              participantId,
+              password: currentPassword,
+              slotKeys,
+            });
+            lastSavedAvailabilityRef.current = saveSignature;
+            if (latestAvailabilitySaveSignatureRef.current === saveSignature) {
+              setParticipantAuthError('');
+            }
+          } catch (error) {
+            if (latestAvailabilitySaveSignatureRef.current === saveSignature) {
+              setParticipantAuthError(getUserFacingErrorMessage(error, '가능 시간을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.'));
+            }
+          } finally {
+            setIsSavingAvailability(false);
+          }
         });
-        lastSavedAvailabilityRef.current = saveSignature;
-        if (pendingLocalSlotKeysRef.current && saveSignature === `${participantId}:${JSON.stringify(pendingLocalSlotKeysRef.current)}`) {
-          pendingLocalSlotKeysRef.current = null;
-        }
-      } catch (error) {
-        setParticipantAuthError(error instanceof Error ? error.message : '가능 시간을 저장하지 못했습니다.');
-      } finally {
-        setIsSavingAvailability(false);
-      }
     }, AVAILABILITY_SAVE_DELAY);
 
     return () => window.clearTimeout(timer);
@@ -1234,7 +1270,7 @@ export default function App() {
       setIsGoogleCalendarModalOpen(false);
       setIsCalendarPickerOpen(true);
     } catch (error) {
-      showAlert(error instanceof Error ? error.message : 'Google Calendar 연동에 실패했습니다.');
+      showAlert(getUserFacingErrorMessage(error, 'Google Calendar 연동에 실패했습니다.'));
     } finally {
       setIsCalendarAutoFilling(false);
     }
@@ -1269,7 +1305,7 @@ export default function App() {
       closeCalendarPicker();
       showToast(`${selectedCalendarIds.length}개 캘린더 기준으로 ${filledCount}개 시간을 채웠습니다.`);
     } catch (error) {
-      showAlert(error instanceof Error ? error.message : 'Google Calendar 연동에 실패했습니다.');
+      showAlert(getUserFacingErrorMessage(error, 'Google Calendar 연동에 실패했습니다.'));
     } finally {
       setIsCalendarAutoFilling(false);
     }
@@ -1377,7 +1413,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
   const handleShareVoteCompletion = async () => {
     if (!isVoteCompletionReady) return;
 
-    const title = boardParams?.title || 'Timelink 모임';
+    const title = boardParams?.title || 'Moitime 모임';
     const text = `“${title}” 투표 완료했어요!\n시간 확인해 주세요 🙂`;
     const url = window.location.href;
 
@@ -1589,13 +1625,13 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
             <span className="w-9 h-9 rounded-full bg-[#19734d] text-white flex items-center justify-center">
               <Calendar size={17} />
             </span>
-            <span className="text-xl font-bold">Timelink</span>
+            <span className="text-xl font-bold">Moitime</span>
           </button>
           <a
             href="https://github.com/sangjun121/when-7-meet"
             target="_blank"
             rel="noreferrer"
-            aria-label="Timelink GitHub 저장소 열기"
+            aria-label="Moitime GitHub 저장소 열기"
             className="inline-flex rounded-sm transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2b9668]"
           >
             <img
@@ -1611,7 +1647,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
         <div className="max-w-6xl mx-auto h-14 px-4 flex items-center justify-between gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-[#1d1d1f] truncate">
-              {appState === 'board' && boardParams ? boardParams.title : 'Timelink'}
+              {appState === 'board' && boardParams ? boardParams.title : 'Moitime'}
             </p>
             <p className="text-xs text-[#7a7a7a]">
               {appState === 'board' && boardParams
@@ -1658,7 +1694,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
           <div className="animate-in fade-in">
             <section className="home-hero relative px-4 pt-12 pb-12 sm:pt-20 sm:pb-16 text-center overflow-hidden">
               <div className="hero-copy">
-              <p className="hero-kicker text-sm font-semibold text-[#19734d] mb-4 animate-fade-up">Timelink</p>
+              <p className="hero-kicker text-sm font-semibold text-[#19734d] mb-4 animate-fade-up">Moitime</p>
               <h2 className="mx-auto max-w-4xl text-[clamp(48px,8vw,104px)] font-semibold leading-[0.95] text-[#1d1d1f]">
                 {meetingType === MEETING_TYPES.REGULAR ? (
                   <>
@@ -1683,7 +1719,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
               </p>
               {typeof meetingCount === 'number' && (
                 <p className="mt-3 text-sm text-[#7a7a7a]" aria-live="polite">
-                  Timelink에서 지금까지 <strong className="font-semibold tabular-nums text-[#19734d]">{meetingCount.toLocaleString()}개의 모임</strong>이 만들어졌어요!
+                  Moitime에서 지금까지 <strong className="font-semibold tabular-nums text-[#19734d]">{meetingCount.toLocaleString()}개의 모임</strong>이 만들어졌어요!
                 </p>
               )}
               </div>
@@ -1701,7 +1737,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                 </div>
                 <div className="preview-footer">
                   <span className="inline-flex items-center gap-2"><span className="preview-marker" /> 모두가 가능한 시간</span>
-                  <span>Timelink</span>
+                  <span>Moitime</span>
                 </div>
               </div>
             </section>
@@ -2104,7 +2140,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                         {isJoining ? '확인 중...' : '참여'}
                       </button>
                     ) : (
-                      <button type="button" onClick={() => { setIsJoined(false); setParticipantId(null); setCurrentUser(''); setCurrentPassword(''); lastSavedAvailabilityRef.current = null; }} className="w-full sm:w-auto shrink-0 bg-white hover:bg-[#f0f0f0] text-[#1d1d1f] px-4 py-3 sm:py-2 rounded-full text-sm font-semibold transition-colors">
+                      <button type="button" onClick={() => { setIsJoined(false); setParticipantId(null); setCurrentUser(''); setCurrentPassword(''); lastSavedAvailabilityRef.current = null; pendingLocalSlotKeysRef.current = null; }} className="w-full sm:w-auto shrink-0 bg-white hover:bg-[#f0f0f0] text-[#1d1d1f] px-4 py-3 sm:py-2 rounded-full text-sm font-semibold transition-colors">
                         변경
                       </button>
                     )}
@@ -2146,15 +2182,8 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                     <p className="text-xs text-[#7a7a7a] mt-1">
                       가능한 칸을 눌러 초록색으로 표시하세요.
                     </p>
-                  </div>
-                  <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-end">
-                    <div className="relative w-full max-w-[300px] rounded-[14px] border border-[#b9dfc5] bg-[#f2f8f3] px-3 py-2.5 text-xs leading-relaxed text-[#397154] shadow-sm">
-                      <span className="mb-1 inline-flex rounded-full bg-[#d6eadc] px-2 py-0.5 font-semibold text-[#19734d]">
-                        새로운 기능 구경하기
-                      </span>
-                      <p>이제 우테코 점심시간을 간편하게 제외할 수 있어요!</p>
-                      <span className="absolute -bottom-1.5 right-6 h-3 w-3 rotate-45 border-b border-r border-[#b9dfc5] bg-[#f2f8f3]" aria-hidden="true" />
-                    </div>
+                </div>
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-end">
                     <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
                       {isWorkMeeting && (
                         <button
@@ -2167,16 +2196,25 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                           {isCalendarAutoFilling ? '캘린더 확인 중...' : '구글 캘린더 연결'}
                         </button>
                       )}
-                      <button
-                        type="button"
-                        onClick={handleExcludeLunchTime}
-                        disabled={!hasActiveParticipantSession || isCalendarAutoFilling || isSavingAvailability || !hasLunchTimeSlots}
-                        title={hasLunchTimeSlots ? '11시 30분부터 13시까지의 점심시간을 제외합니다.' : '현재 시간대에 점심시간 슬롯이 없습니다.'}
-                        className="w-full sm:w-auto flex items-center justify-center gap-1.5 rounded-full bg-[#eaf1eb] px-3 py-2 text-xs font-semibold text-[#19734d] transition-colors hover:bg-[#d6eadc] disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        <Clock size={14} />
-                        점심시간 제외하기
-                      </button>
+                      <div className="relative flex w-full flex-col gap-2 sm:w-auto sm:pt-[68px]">
+                        <div className="relative w-full max-w-[300px] rounded-[14px] border border-[#b9dfc5] bg-[#f2f8f3] px-3 py-2.5 text-xs leading-relaxed text-[#397154] shadow-sm sm:absolute sm:left-1/2 sm:top-0 sm:w-[300px] sm:-translate-x-1/2">
+                          <span className="mb-1 inline-flex rounded-full bg-[#d6eadc] px-2 py-0.5 font-semibold text-[#19734d]">
+                            새로운 기능 구경하기
+                          </span>
+                          <p>이제 우테코 점심시간을 간편하게 제외할 수 있어요!</p>
+                          <span className="absolute -bottom-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 border-b border-r border-[#b9dfc5] bg-[#f2f8f3]" aria-hidden="true" />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleExcludeLunchTime}
+                          disabled={!hasActiveParticipantSession || isCalendarAutoFilling || isSavingAvailability || !hasLunchTimeSlots}
+                          title={hasLunchTimeSlots ? '11시 30분부터 13시까지의 점심시간을 제외합니다.' : '현재 시간대에 점심시간 슬롯이 없습니다.'}
+                          className="w-full sm:w-auto flex items-center justify-center gap-1.5 rounded-full bg-[#eaf1eb] px-3 py-2 text-xs font-semibold text-[#19734d] transition-colors hover:bg-[#d6eadc] disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <Clock size={14} />
+                          점심시간 제외하기
+                        </button>
+                      </div>
                       <button
                         type="button"
                         onClick={handleResetCurrentUserAvailability}
