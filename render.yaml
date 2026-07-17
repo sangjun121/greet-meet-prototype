@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: when7meet-api
+    runtime: docker
+    rootDir: server
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_USERNAME
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false
+      - key: APP_ALLOWED_ORIGIN
+        sync: false
+      - key: DB_POOL_SIZE
+        value: "5"
+      - key: DB_MINIMUM_IDLE
+        value: "1"

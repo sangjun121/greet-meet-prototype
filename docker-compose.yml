@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: when7meet-postgres
+    environment:
+      POSTGRES_DB: when7meet
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - when7meet-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  when7meet-postgres-data:

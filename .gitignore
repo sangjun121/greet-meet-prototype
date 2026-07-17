@@ -4,11 +4,15 @@ node_modules/
 # Build output
 dist/
 build/
+server/target/
+server/build/
+server/.gradle/
 
 # Local environment files, including Google OAuth configuration
 .env
 .env.*
 !.env.example
+server/.env
 
 # Local Supabase setup notes
 SUPABASE_SETUP.md

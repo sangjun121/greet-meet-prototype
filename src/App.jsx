@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Copy, CheckCircle2, AlertCircle, MessageSquare, Info, MousePointer2, Calendar, Link as LinkIcon, ArrowRight, Wand2, RotateCcw, ChevronLeft, ChevronRight, Clock, Users } from 'lucide-react';
-import { createMeeting as createRemoteMeeting, joinMeeting as joinRemoteMeeting, loadMeeting, saveParticipantAvailability, subscribeToMeeting } from './lib/boardApi';
-import { isSupabaseConfigured } from './lib/supabase';
+import { createMeeting as createRemoteMeeting, joinMeeting as joinRemoteMeeting, loadMeeting, saveParticipantAvailability, subscribeToMeeting, isBackendConfigured } from './lib/boardApi';
 
 const buildBoardHours = (start, end) => {
   const hours = [];
@@ -468,16 +467,16 @@ export default function App() {
         setAppState('board');
         setBoardParams(null);
         setIsBoardLoading(false);
-        setBoardLoadError('유효한 Supabase 모임 링크가 아닙니다. 새 모임을 만들거나 올바른 링크를 확인해주세요.');
+        setBoardLoadError('유효한 모임 링크가 아닙니다. 새 모임을 만들거나 올바른 링크를 확인해주세요.');
         resetBoardSession();
         return;
       }
 
-      if (!isSupabaseConfigured) {
+      if (!isBackendConfigured) {
         setAppState('board');
         setBoardParams(null);
         setIsBoardLoading(false);
-        setBoardLoadError('이 모임 링크를 열려면 Supabase 환경변수를 먼저 설정해야 합니다.');
+        setBoardLoadError('이 모임 링크를 열려면 API 환경변수를 먼저 설정해야 합니다.');
         resetBoardSession();
         return;
       }
@@ -684,8 +683,8 @@ export default function App() {
       showAlert('예상 참여 인원은 1명 이상으로 입력해주세요.');
       return;
     }
-    if (!isSupabaseConfigured) {
-      showAlert('Supabase 환경변수가 설정되지 않았습니다. .env.local 또는 배포 환경변수를 먼저 설정해주세요.');
+    if (!isBackendConfigured) {
+      showAlert('API 환경변수가 설정되지 않았습니다. .env.local 또는 배포 환경변수를 먼저 설정해주세요.');
       return;
     }
 
@@ -1809,14 +1808,14 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                   )}
                 </div>
 
-                {!isSupabaseConfigured && (
+                {!isBackendConfigured && (
                   <p className="mt-4 rounded-[12px] bg-[#fff8e8] px-3 py-2 text-xs leading-relaxed text-[#8a6418]">
-                    모임을 만들려면 Supabase 환경변수 설정이 필요합니다.
+                    모임을 만들려면 API 환경변수 설정이 필요합니다.
                   </p>
                 )}
                 <button 
                   onClick={handleCreateMeeting}
-                  disabled={isCreatingMeeting || !isSupabaseConfigured}
+                  disabled={isCreatingMeeting || !isBackendConfigured}
                   className="w-full mt-4 bg-[#19734d] hover:bg-[#2b9668] text-white font-semibold text-base py-4 rounded-full flex items-center justify-center gap-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isCreatingMeeting ? '모임 만드는 중...' : meetingType === MEETING_TYPES.REGULAR ? '정기 모임 보드 만들기' : '보드 생성하기'} <ArrowRight size={20} />
