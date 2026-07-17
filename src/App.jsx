@@ -529,6 +529,10 @@ export default function App() {
     };
 
     const handleHashChange = async () => {
+      if (window.location.hash === '' && window.location.href.endsWith('#')) {
+        window.history.replaceState(window.history.state, '', window.location.href.slice(0, -1));
+      }
+
       const hash = window.location.hash;
       const pathname = window.location.pathname;
       const pathShareCode = parseBoardPath(pathname);
