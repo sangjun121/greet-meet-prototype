@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Copy, CheckCircle2, AlertCircle, MessageSquare, Info, MousePointer2, Calendar, Link as LinkIcon, ArrowRight, Wand2, RotateCcw, ChevronLeft, ChevronRight, Clock, Users, X } from 'lucide-react';
+import { Copy, CheckCircle2, AlertCircle, MessageSquare, Info, MousePointer2, Calendar, Link as LinkIcon, Github, ArrowRight, Wand2, RotateCcw, ChevronLeft, ChevronRight, Clock, Users, X } from 'lucide-react';
 import { createMeeting as createRemoteMeeting, getMeetingCount, joinMeeting as joinRemoteMeeting, loadMeeting, loadMeetingByShareCode, saveParticipantAvailability, subscribeToMeeting } from './lib/boardApi';
 import { isSupabaseConfigured } from './lib/supabase';
 
@@ -35,8 +35,50 @@ const WEEKDAY_OPTIONS = [
 const WEEKDAY_LABELS = WEEKDAY_OPTIONS.reduce((labels, day) => ({ ...labels, [day.key]: day.label }), {});
 const GOOGLE_CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
 const GOOGLE_IDENTITY_SCRIPT_URL = 'https://accounts.google.com/gsi/client';
+const GITHUB_REPOSITORY_API = 'https://api.github.com/repos/sangjun121/moitime';
 // New codes are 8-character Base64URL tokens; keep 10-character hex support for an older migration.
 const SHARE_CODE_PATTERN = /^(?:[A-Za-z0-9_-]{8}|[a-f0-9]{10})$/;
+
+const GithubStarBadge = () => {
+  const [starCount, setStarCount] = useState(null);
+
+  useEffect(() => {
+    let isActive = true;
+
+    fetch(GITHUB_REPOSITORY_API, {
+      headers: { Accept: 'application/vnd.github+json' },
+    })
+      .then(response => {
+        if (!response.ok) throw new Error('GitHub star count unavailable');
+        return response.json();
+      })
+      .then(repository => {
+        if (isActive && Number.isInteger(repository.stargazers_count)) {
+          setStarCount(repository.stargazers_count);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  return (
+    <span
+      title="GitHub 저장소 스타 수"
+      className="inline-flex h-6 overflow-hidden rounded-[4px] border border-[#d0d7de] text-[11px] font-semibold leading-none shadow-[0_1px_2px_rgba(27,31,36,0.12)] transition-opacity hover:opacity-85"
+    >
+      <span className="inline-flex items-center gap-1 bg-[#24292f] px-2 text-white">
+        <Github size={12} strokeWidth={2} aria-hidden="true" />
+        <span>Star</span>
+      </span>
+      <span className="inline-flex min-w-[28px] items-center justify-center bg-[#f6f8fa] px-2 text-[#24292f] tabular-nums">
+        {starCount === null ? '-' : starCount.toLocaleString('ko-KR')}
+      </span>
+    </span>
+  );
+};
 
 const parseBoardHash = hash => {
   if (!hash.startsWith('#board?')) return null;
@@ -1660,11 +1702,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
             aria-label="Moitime GitHub 저장소 열기"
             className="inline-flex rounded-sm transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2b9668]"
           >
-            <img
-              src="https://img.shields.io/github/stars/sangjun121/moitime?style=social"
-              alt="Star on GitHub"
-              className="h-5"
-            />
+            <GithubStarBadge />
           </a>
         </div>
       </header>
@@ -1678,7 +1716,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
             <p className="text-xs text-[#7a7a7a]">
               {appState === 'board' && boardParams
                 ? `${boardParams.dates.length}${boardParams.type === MEETING_TYPES.REGULAR ? '개 요일' : '일'} · ${boardParams.start}:00-${boardParams.end}:00`
-                : meetingType === MEETING_TYPES.REGULAR ? '요일별 가능한 시간을 빠르게 정리합니다' : '가능한 날짜와 시간을 빠르게 정리합니다'}
+                : meetingType === MEETING_TYPES.REGULAR ? '요일별 가능한 시간 정하기' : '가능한 날짜 및 시간 정하기'}
             </p>
           </div>
           {appState === 'board' && (
@@ -1722,25 +1760,16 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
               <div className="hero-copy">
               <p className="hero-kicker text-sm font-semibold text-[#19734d] mb-4 animate-fade-up">Moitime</p>
               <h2 className="mx-auto max-w-4xl text-[clamp(48px,8vw,104px)] font-semibold leading-[0.95] text-[#1d1d1f]">
-                {meetingType === MEETING_TYPES.REGULAR ? (
-                  <>
-                    <span className="inline-block animate-word-pop delay-100">정기</span>{' '}
-                    <span className="inline-block animate-word-pop delay-300">모임</span><br />
-                    <span className="inline-block animate-word-pop delay-500">시간을</span>{' '}
-                    <span className="inline-block animate-word-pop delay-700">정해요</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="inline-block animate-word-pop delay-100">시간</span>{' '}
-                    <span className="inline-block animate-word-pop delay-300">맞추기,</span><br />
-                    <span className="inline-block animate-word-pop delay-500">링크</span>{' '}
-                    <span className="inline-block animate-word-pop delay-700">하나로 끝내세요</span>
-                  </>
-                )}
+                <>
+                  <span className="inline-block animate-word-pop delay-100">시간</span>{' '}
+                  <span className="inline-block animate-word-pop delay-300">맞추기,</span><br />
+                  <span className="inline-block animate-word-pop delay-500">링크</span>{' '}
+                  <span className="inline-block animate-word-pop delay-700">하나로 끝내세요</span>
+                </>
               </h2>
               <p className="hero-description mx-auto mt-6 max-w-2xl text-base sm:text-xl leading-relaxed text-[#333333] animate-fade-up delay-900">
                 {meetingType === MEETING_TYPES.REGULAR
-                  ? '월요일부터 일요일까지 가능한 시간을 모아 고정 모임 시간을 찾습니다.'
+                  ? '월요일에서 일요일까지 가능한 시간을 표시하고, 정기 시간표를 만들어보세요.'
                   : '각자 가능한 시간을 표시하고, 모두 가능한 시간을 찾아보세요.'}
               </p>
               {typeof meetingCount === 'number' && (
