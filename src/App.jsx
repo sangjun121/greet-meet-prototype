@@ -744,7 +744,7 @@ export default function App() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: boardParams?.title || 'Moitime',
+          title: boardParams?.title || '모아타임',
           text: shareMessage,
         });
         showToast('공유 창을 열었습니다.');
@@ -1462,25 +1462,30 @@ export default function App() {
   const generatedMessage = useMemo(() => {
     if (results.length === 0) return boardParams?.type === MEETING_TYPES.REGULAR ? "아직 가능한 시간이 없습니다." : "입력된 시간이 없습니다.";
     const selected = results[selectedResultIndex] || results[0];
+    const title = boardParams?.title || '모임';
+    const availableNames = selected.available.join(', ');
+    const unavailableNames = selected.unavailable.length > 0 ? selected.unavailable.join(', ') : '모두 가능해요';
 
     if (boardParams?.type === MEETING_TYPES.REGULAR) {
-      return `[정기 모임 시간 공유]
-${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
+      return `[${title} 시간 조율]
+안녕하세요! 정기 모임 시간 중 가장 많이 겹치는 시간은 아래와 같아요.
 
-후보 시간: ${selected.time}
-가능한 사람: ${selected.available.join(', ')}
+⏰ ${selected.time}
+👥 ${selected.availableCount}명 가능
+가능한 사람: ${availableNames}
 
-괜찮으면 이 시간대로 정해요.`;
+이 시간으로 정해도 괜찮을까요? 의견 남겨주세요 🙂`;
     }
     
-    return `[약속 시간 공유]
-제목: ${boardParams?.title}
+    return `[${title} 일정 조율]
+안녕하세요! 후보 시간 중 가장 많이 겹치는 시간입니다.
 
-추천 시간: ${selected.time}
-가능 인원: ${selected.availableCount}명
+📅 ${selected.time}
+👥 ${selected.availableCount}명 가능
+가능한 사람: ${availableNames}
+불가능한 사람: ${selected.unavailable.length > 0 ? unavailableNames : '없음'}
 
-- 가능: ${selected.available.join(', ')}
-- 불가능: ${selected.unavailable.length > 0 ? selected.unavailable.join(', ') : '없음'}`;
+이 시간으로 진행해도 괜찮을까요? 확인 부탁드립니다! 🙂`;
   }, [results, selectedResultIndex, boardParams]);
 
   const handleOpenSlackConnectModal = (target) => {
@@ -1516,7 +1521,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
   const handleShareVoteCompletion = async () => {
     if (!isVoteCompletionReady) return;
 
-    const title = boardParams?.title || 'Moitime 모임';
+    const title = boardParams?.title || '모아타임 모임';
     const text = `“${title}” 투표 완료했어요!\n시간 확인해 주세요 🙂`;
     const url = getBoardShareUrl(boardParams);
 
@@ -1693,7 +1698,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
             <span className="w-9 h-9 rounded-full bg-[#19734d] text-white flex items-center justify-center">
               <Calendar size={17} />
             </span>
-            <span className="text-xl font-bold">Moitime</span>
+            <span className="text-xl font-bold">모아타임</span>
           </button>
           <a
             href="https://github.com/sangjun121/moitime"
@@ -1711,7 +1716,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
         <div className="max-w-6xl mx-auto h-14 px-4 flex items-center justify-between gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-[#1d1d1f] truncate">
-              {appState === 'board' && boardParams ? boardParams.title : 'Moitime'}
+              {appState === 'board' && boardParams ? boardParams.title : '모아타임'}
             </p>
             <p className="text-xs text-[#7a7a7a]">
               {appState === 'board' && boardParams
@@ -1758,7 +1763,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
           <div className="animate-in fade-in">
             <section className="home-hero relative px-4 pt-12 pb-12 sm:pt-20 sm:pb-16 text-center overflow-hidden">
               <div className="hero-copy">
-              <p className="hero-kicker text-sm font-semibold text-[#19734d] mb-4 animate-fade-up">Moitime</p>
+              <p className="hero-kicker text-sm font-semibold text-[#19734d] mb-4 animate-fade-up">모아타임</p>
               <h2 className="mx-auto max-w-4xl text-[clamp(48px,8vw,104px)] font-semibold leading-[0.95] text-[#1d1d1f]">
                 <>
                   <span className="inline-block animate-word-pop delay-100">시간</span>{' '}
@@ -1774,7 +1779,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
               </p>
               {typeof meetingCount === 'number' && (
                 <p className="mt-3 text-sm text-[#7a7a7a]" aria-live="polite">
-                  Moitime에서 지금까지 <strong className="font-semibold tabular-nums text-[#19734d]">{meetingCount.toLocaleString()}개의 모임</strong>이 만들어졌어요!
+                  모아타임에서 지금까지 <strong className="font-semibold tabular-nums text-[#19734d]">{meetingCount.toLocaleString()}개의 모임</strong>이 만들어졌어요!
                 </p>
               )}
               </div>
@@ -1792,7 +1797,7 @@ ${boardParams?.title || '정기 모임'}은 이 시간으로 어때요?
                 </div>
                 <div className="preview-footer">
                   <span className="inline-flex items-center gap-2"><span className="preview-marker" /> 모두가 가능한 시간</span>
-                  <span>Moitime</span>
+                  <span>모아타임</span>
                 </div>
               </div>
             </section>
